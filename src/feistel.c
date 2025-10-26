@@ -134,19 +134,20 @@ void feistel_encrypt(uint8_t *data, size_t len, const uint8_t *key, size_t key_l
         feistel_block_encrypt(data + i * BLOCK_SIZE, key, key_len);
     }
     
-    /* Procesar bytes restantes con padding implícito (XOR simple) */
+    /* Para bytes restantes, usar stream cipher simple (XOR con keystream) */
     size_t remaining = len % BLOCK_SIZE;
     if (remaining > 0) {
-        uint8_t pad_block[BLOCK_SIZE] = {0};
-        memcpy(pad_block, data + full_blocks * BLOCK_SIZE, remaining);
-        
-        /* Pad con bytes del tamaño restante */
-        for (size_t i = remaining; i < BLOCK_SIZE; i++) {
-            pad_block[i] = (uint8_t)remaining;
+        /* Generar keystream del último bloque */
+        uint8_t keystream[BLOCK_SIZE] = {0};
+        for (size_t i = 0; i < BLOCK_SIZE; i++) {
+            keystream[i] = (uint8_t)(full_blocks + i);
         }
+        feistel_block_encrypt(keystream, key, key_len);
         
-        feistel_block_encrypt(pad_block, key, key_len);
-        memcpy(data + full_blocks * BLOCK_SIZE, pad_block, remaining);
+        /* XOR con keystream */
+        for (size_t i = 0; i < remaining; i++) {
+            data[full_blocks * BLOCK_SIZE + i] ^= keystream[i];
+        }
     }
 }
 
@@ -159,18 +160,19 @@ void feistel_decrypt(uint8_t *data, size_t len, const uint8_t *key, size_t key_l
         feistel_block_decrypt(data + i * BLOCK_SIZE, key, key_len);
     }
     
-    /* Procesar bytes restantes (mismo padding que encrypt) */
+    /* Para bytes restantes, usar mismo stream cipher que encrypt */
     size_t remaining = len % BLOCK_SIZE;
     if (remaining > 0) {
-        uint8_t pad_block[BLOCK_SIZE] = {0};
-        memcpy(pad_block, data + full_blocks * BLOCK_SIZE, remaining);
-        
-        /* Pad con bytes del tamaño restante */
-        for (size_t i = remaining; i < BLOCK_SIZE; i++) {
-            pad_block[i] = (uint8_t)remaining;
+        /* Generar mismo keystream del último bloque */
+        uint8_t keystream[BLOCK_SIZE] = {0};
+        for (size_t i = 0; i < BLOCK_SIZE; i++) {
+            keystream[i] = (uint8_t)(full_blocks + i);
         }
+        feistel_block_encrypt(keystream, key, key_len);
         
-        feistel_block_decrypt(pad_block, key, key_len);
-        memcpy(data + full_blocks * BLOCK_SIZE, pad_block, remaining);
+        /* XOR con keystream (desencriptación es igual que encriptación en stream cipher) */
+        for (size_t i = 0; i < remaining; i++) {
+            data[full_blocks * BLOCK_SIZE + i] ^= keystream[i];
+        }
     }
 }
