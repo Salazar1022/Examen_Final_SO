@@ -104,10 +104,10 @@ static void feistel_block_decrypt(uint8_t *block, const uint8_t *key, size_t key
     left = right;
     right = temp;
     
-    /* 16 rondas en orden inverso */
+    /* 16 rondas en orden inverso - aplicar F sobre left */
     for (int round = FEISTEL_ROUNDS - 1; round >= 0; round--) {
         uint32_t subkey = hash_subkey(key, key_len, round);
-        uint32_t f_result = feistel_f(left, subkey);
+        uint32_t f_result = feistel_f(left, subkey);  /* F sobre LEFT en decrypt */
         uint32_t new_left = right ^ f_result;
         right = left;
         left = new_left;
