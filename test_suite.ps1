@@ -13,9 +13,9 @@ if (-not (Test-Path tests_auto)) {
 Set-Location tests_auto
 
 Write-Host "[1/9] Creando archivos de prueba..."
-Set-Content -Path test_rle.txt -Value "AAAAAABBBBBBCCCCCCDDDDDD"
-Set-Content -Path test_lzw.txt -Value "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-Set-Content -Path test_enc.txt -Value "Este es un archivo secreto con información confidencial. CONFIDENCIAL CONFIDENCIAL CONFIDENCIAL."
+[System.IO.File]::WriteAllText("test_rle.txt", "AAAAAABBBBBBCCCCCCDDDDDD", [System.Text.Encoding]::ASCII)
+[System.IO.File]::WriteAllText("test_lzw.txt", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", [System.Text.Encoding]::ASCII)
+[System.IO.File]::WriteAllText("test_enc.txt", "Este es un archivo secreto con información confidencial. CONFIDENCIAL CONFIDENCIAL CONFIDENCIAL.", [System.Text.Encoding]::ASCII)
 Write-Host ""
 
 $allPassed = $true

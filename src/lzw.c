@@ -2,6 +2,7 @@
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define LZW_MAX_CODE 4096  /* 12 bits */
 #define LZW_INIT_DICT_SIZE 256
@@ -146,6 +147,7 @@ int lzw_decompress(const uint8_t *in, size_t inlen, uint8_t **out, size_t *outle
         
         uint8_t *entry_data;
         size_t entry_len;
+        bool is_special_case = false;
         
         if (code < next_code && table[code]) {
             /* Código existe en la tabla */
@@ -153,21 +155,12 @@ int lzw_decompress(const uint8_t *in, size_t inlen, uint8_t **out, size_t *outle
             entry_len = table_len[code];
         } else if (code == next_code) {
             /* Caso especial: código = next_code */
+            is_special_case = true;
             entry_len = table_len[prev_code] + 1;
             entry_data = (uint8_t*)malloc(entry_len);
             if (!entry_data) break;
             memcpy(entry_data, table[prev_code], table_len[prev_code]);
             entry_data[entry_len - 1] = table[prev_code][0];
-            
-            /* Agregar a tabla */
-            if (next_code < LZW_MAX_CODE) {
-                table[next_code] = entry_data;
-                table_len[next_code] = entry_len;
-                next_code++;
-            } else {
-                free(entry_data);
-                break;
-            }
         } else {
             /* Código inválido */
             break;
@@ -181,15 +174,26 @@ int lzw_decompress(const uint8_t *in, size_t inlen, uint8_t **out, size_t *outle
         memcpy(output + out_pos, entry_data, entry_len);
         out_pos += entry_len;
         
-        /* Agregar nueva entrada a la tabla */
-        if (code != next_code && next_code < LZW_MAX_CODE) {
-            table[next_code] = (uint8_t*)malloc(table_len[prev_code] + 1);
-            if (table[next_code]) {
-                memcpy(table[next_code], table[prev_code], table_len[prev_code]);
-                table[next_code][table_len[prev_code]] = entry_data[0];
-                table_len[next_code] = table_len[prev_code] + 1;
+        /* Agregar nueva entrada a la tabla (siempre, excepto cuando la tabla está llena) */
+        if (next_code < LZW_MAX_CODE) {
+            if (is_special_case) {
+                /* En caso especial, entry_data ya contiene la nueva entrada */
+                table[next_code] = entry_data;
+                table_len[next_code] = entry_len;
                 next_code++;
+            } else {
+                /* Crear nueva entrada: prev_code + primer byte de entry actual */
+                table[next_code] = (uint8_t*)malloc(table_len[prev_code] + 1);
+                if (table[next_code]) {
+                    memcpy(table[next_code], table[prev_code], table_len[prev_code]);
+                    table[next_code][table_len[prev_code]] = entry_data[0];
+                    table_len[next_code] = table_len[prev_code] + 1;
+                    next_code++;
+                }
             }
+        } else if (is_special_case) {
+            /* Si la tabla está llena y era caso especial, liberar memoria temporal */
+            free(entry_data);
         }
         
         prev_code = code;

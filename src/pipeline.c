@@ -13,9 +13,14 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 
+/* Define O_BINARY for Windows compatibility, no-op on Unix */
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 static int slurp(const char *p, uint8_t **buf, size_t *len){
-    int fd = open(p, O_RDONLY);
+    int fd = open(p, O_RDONLY | O_BINARY);
     if(fd<0) return -1;
     struct stat st; if(fstat(fd,&st)<0){ close(fd); return -1; }
     size_t n = (size_t)st.st_size;
@@ -31,7 +36,7 @@ static int slurp(const char *p, uint8_t **buf, size_t *len){
     *buf=b; *len=off; return 0;
 }
 static int spit(const char *p, const uint8_t *buf, size_t len){
-    int fd = open(p, O_CREAT|O_TRUNC|O_WRONLY, 0644);
+    int fd = open(p, O_CREAT|O_TRUNC|O_WRONLY|O_BINARY, 0644);
     if(fd<0) return -1;
     int rc = write_all(fd, buf, len);
     close(fd);
@@ -78,7 +83,7 @@ int run_pipeline_file(const gsea_args *a, const char *in_path, const char *out_p
         }
 
         /* Empaquetar con cabecera */
-        int fd = open(out_path, O_CREAT|O_TRUNC|O_WRONLY, 0644);
+        int fd = open(out_path, O_CREAT|O_TRUNC|O_WRONLY|O_BINARY, 0644);
         if(fd<0){ free(buf); return -1; }
         
         gsea_hdr h = {
@@ -102,7 +107,7 @@ int run_pipeline_file(const gsea_args *a, const char *in_path, const char *out_p
 
     /* Caso 2: Descompresión y/o Desencriptación (archivo .gsea -> archivo normal) */
     if(a->do_decompress || a->do_decrypt){
-        int fd = open(in_path, O_RDONLY);
+        int fd = open(in_path, O_RDONLY | O_BINARY);
         if(fd<0) return -1;
 
         /* Leer cabecera */
