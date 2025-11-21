@@ -21,6 +21,9 @@
 
 **🎓 Proyecto:** Examen Final - Sistemas Operativos | **📅 Año:** 2025
 
+## 📽️ Link del Video
+[https://www.youtube.com/watch?v=aFyRhFw0onk](https://youtu.be/vebukszLWGQ)
+
 ### 🎯 Características
 
 - 🗜️ **Compresión:** RLE (rápido) y LZW (versátil)
