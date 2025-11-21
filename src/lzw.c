@@ -88,6 +88,7 @@ int lzw_compress(const uint8_t *in, size_t inlen, uint8_t **out, size_t *outlen)
 }
 
 int lzw_decompress(const uint8_t *in, size_t inlen, uint8_t **out, size_t *outlen) {
+    
     if (!in || inlen == 0 || inlen % 2 != 0) {
         *out = NULL;
         *outlen = 0;
